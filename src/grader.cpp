@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "openai.h"
+
 using nlohmann::json;
 
 namespace {
@@ -108,31 +110,7 @@ json buildRequest(const std::string& model, const GradeInput& in) {
 }
 
 GradeResult parseResponse(const json& response) {
-    std::string status = getStr(response, "status");
-    if (status == "incomplete") {
-        std::string reason;
-        if (response.contains("incomplete_details") && response["incomplete_details"].is_object())
-            reason = getStr(response["incomplete_details"], "reason");
-        throw std::runtime_error("model response was incomplete" + (reason.empty() ? "" : " (" + reason + ")"));
-    }
-
-    std::string text;
-    for (const auto& item : response.value("output", json::array())) {
-        if (getStr(item, "type") != "message") continue;
-        for (const auto& part : item.value("content", json::array())) {
-            std::string type = getStr(part, "type");
-            if (type == "refusal") throw std::runtime_error("model refused: " + getStr(part, "refusal"));
-            if (type == "output_text") text += getStr(part, "text");
-        }
-    }
-    if (text.empty()) throw std::runtime_error("model response contained no text output");
-
-    json j;
-    try {
-        j = json::parse(text);
-    } catch (const json::exception& e) {
-        throw std::runtime_error(std::string("model output was not valid JSON: ") + e.what());
-    }
+    json j = structuredOutput(response);
 
     GradeResult r;
     r.summary = getStr(j, "summary");

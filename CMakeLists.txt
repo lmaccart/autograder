@@ -3,6 +3,7 @@ project(autograder CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # for editors (clangd)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -28,6 +29,9 @@ add_library(autograder_core STATIC
   src/recurring.cpp
   src/report.cpp
   src/taildrop.cpp
+  src/pipeline.cpp
+  src/watch.cpp
+  src/bundle.cpp
 )
 target_include_directories(autograder_core PUBLIC src)
 target_link_libraries(autograder_core PUBLIC CURL::libcurl nlohmann_json::nlohmann_json)
@@ -39,7 +43,7 @@ target_link_libraries(autograder PRIVATE autograder_core)
 install(TARGETS autograder RUNTIME DESTINATION bin)
 
 enable_testing()
-foreach(t test_recurring test_collect)
+foreach(t test_recurring test_collect test_watch test_bundle)
   add_executable(${t} tests/${t}.cpp)
   target_link_libraries(${t} PRIVATE autograder_core)
   add_test(NAME ${t} COMMAND ${t})

@@ -96,6 +96,44 @@ double serverWait(const HttpResponse& r) {
 
 }  // namespace
 
+namespace {
+
+std::string str(const json& j, const char* key) {
+    auto it = j.find(key);
+    return it != j.end() && it->is_string() ? it->get<std::string>() : "";
+}
+
+}  // namespace
+
+json structuredOutput(const json& response) {
+    std::string status = str(response, "status");
+    if (status == "incomplete") {
+        std::string reason;
+        if (response.contains("incomplete_details") && response["incomplete_details"].is_object())
+            reason = str(response["incomplete_details"], "reason");
+        throw std::runtime_error("model response was incomplete" + (reason.empty() ? "" : " (" + reason + ")"));
+    }
+
+    std::string text;
+    for (const auto& item : response.value("output", json::array())) {
+        if (str(item, "type") != "message") continue;
+        for (const auto& part : item.value("content", json::array())) {
+            std::string type = str(part, "type");
+            if (type == "refusal") throw std::runtime_error("model refused: " + str(part, "refusal"));
+            if (type == "output_text") text += str(part, "text");
+        }
+    }
+    if (text.empty()) throw std::runtime_error("model response contained no text output");
+
+    json j;
+    try {
+        j = json::parse(text);
+    } catch (const json::exception& e) {
+        throw std::runtime_error(std::string("model output was not valid JSON: ") + e.what());
+    }
+    return j;
+}
+
 double parseDuration(const std::string& s) {
     if (s.empty()) return -1;
     double total = 0;

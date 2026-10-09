@@ -45,7 +45,7 @@ std::string base64Encode(const std::string& data) {
     return out;
 }
 
-static bool ignoredPath(const fs::path& rel) {
+bool ignoredPath(const fs::path& rel) {
     for (const auto& part : rel) {
         std::string s = part.string();
         if (s == "__MACOSX" || s == ".git" || s == ".DS_Store" || s == "node_modules" ||

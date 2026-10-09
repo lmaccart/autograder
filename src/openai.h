@@ -14,6 +14,10 @@ struct ApiError : std::runtime_error {
 nlohmann::json postResponses(const std::string& baseUrl, const std::string& apiKey,
                              const nlohmann::json& body, int maxWaitSeconds);
 
+// Returns the JSON object a structured-output (json_schema) response produced.
+// Throws std::runtime_error if the response is incomplete, refused, or malformed.
+nlohmann::json structuredOutput(const nlohmann::json& response);
+
 // Parses durations like "1s", "6m0s", "250ms", "1.5s", "2h3m" or a bare
 // number of seconds. Returns seconds, or -1 if unparseable.
 double parseDuration(const std::string& s);

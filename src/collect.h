@@ -29,4 +29,8 @@ void collectPath(const fs::path& root, const std::string& display, const Collect
                  size_t& budget, Collected& out);
 
 bool looksBinary(const std::string& data);
+
+// True for OS/editor junk (__MACOSX, .git, .DS_Store, ...) anywhere in `rel`.
+bool ignoredPath(const fs::path& rel);
+
 std::string base64Encode(const std::string& data);
