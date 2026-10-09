@@ -20,15 +20,19 @@ void moveTo(const fs::path& from, const fs::path& to) {
     std::error_code ec;
     fs::rename(from, to, ec);
     if (!ec) return;
-    fs::copy(from, to, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+    fs::copy(from, to, fs::copy_options::recursive | fs::copy_options::overwrite_existing |
+                           fs::copy_options::copy_symlinks);  // moved as links, never followed
     fs::remove_all(from);
 }
 
 // Unpacks one received item into `dest`.
 void unpack(const fs::path& item, const fs::path& dest) {
     fs::create_directories(dest);
+    if (fs::is_symlink(item))
+        throw std::runtime_error(item.filename().string() + " is a symbolic link, which isn't allowed");
     if (fs::is_directory(item))
-        fs::copy(item, dest, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+        fs::copy(item, dest, fs::copy_options::recursive | fs::copy_options::overwrite_existing |
+                                 fs::copy_options::skip_symlinks);
     else if (isZip(item))
         extractZip(item, dest);
     else
@@ -60,7 +64,7 @@ std::string joined(const std::vector<std::string>& v) {
 std::vector<std::string> bundleFiles(const fs::path& root) {
     std::vector<std::string> files;
     for (const auto& e : fs::recursive_directory_iterator(root)) {
-        if (!e.is_regular_file()) continue;
+        if (e.is_symlink() || !e.is_regular_file()) continue;  // never read through links
         fs::path rel = fs::relative(e.path(), root);
         if (ignoredPath(rel)) continue;
         files.push_back(rel.generic_string());

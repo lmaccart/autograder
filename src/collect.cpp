@@ -100,7 +100,7 @@ void collectPath(const fs::path& root, const std::string& display, const Collect
 
     std::vector<fs::path> files;
     for (const auto& e : fs::recursive_directory_iterator(root)) {
-        if (!e.is_regular_file()) continue;
+        if (e.is_symlink() || !e.is_regular_file()) continue;  // never read through links
         fs::path rel = fs::relative(e.path(), root);
         if (ignoredPath(rel)) continue;
         files.push_back(e.path());

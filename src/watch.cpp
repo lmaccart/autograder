@@ -23,7 +23,7 @@ std::string stamp() { return "[" + now("%H:%M:%S") + "] "; }
 
 bool visible(const fs::path& p) {
     std::string n = p.filename().string();
-    return !n.empty() && n[0] != '.' && !ignoredPath(p.filename());
+    return !n.empty() && n[0] != '.' && !ignoredPath(p.filename()) && !fs::is_symlink(p);
 }
 
 // Every file under the inbox with its size, so a folder still arriving
