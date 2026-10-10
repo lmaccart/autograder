@@ -12,9 +12,26 @@ A command-line tool that grades your submission against a rubric using the OpenA
 
 ```sh
 sudo apt install build-essential cmake libcurl4-openssl-dev nlohmann-json3-dev zip unzip
-cmake -B build -S . && cmake --build build -j
+cmake -B build -S . && cmake --build build -j1
 ctest --test-dir build          # optional
 sudo cmake --install build      # installs to /usr/local/bin/autograder
+```
+
+**Build with `-j1` on a Pi.** Each source file needs a few hundred MB of RAM to compile, and a
+bare `-j` compiles them all at once. That can run a 1 GB Pi 3 out of memory and freeze it, SSH
+included. `-j2` is fine on a Pi with 2 GB or more. Two more safeguards are worth having on a Pi
+you reach remotely:
+
+```sh
+sudo apt install -y earlyoom tmux   # earlyoom kills runaway processes before the Pi freezes
+tmux new -s build                   # the build keeps going if SSH drops; `tmux attach -t build`
+```
+
+To update later:
+
+```sh
+cd ~/autograder && git pull && cmake --build build -j1 && sudo cmake --install build
+systemctl --user restart autograder   # if you run it as a service (see below)
 ```
 
 On macOS: `brew install cmake` (if nlohmann-json isn't installed, CMake downloads it).
